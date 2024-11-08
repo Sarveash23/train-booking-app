@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(uuid())
+  name       String
+  email      String    @unique
+  password   String
+  phone      String
+  created_at DateTime  @default(now())
+  bookings   Booking[]
+
+  @@map("users")
+}
+
+model Train {
+  id             String    @id @default(uuid())
+  train_number   String    @unique
+  origin         String
+  destination    String
+  departure_date DateTime
+  return_date    DateTime
+  coaches        Coach[]
+  bookings       Booking[]
+
+  @@map("trains")
+}
+
+model Coach {
+  id           String @id @default(uuid())
+  train_id     String
+  coach_number String
+  train        Train  @relation(fields: [train_id], references: [id])
+  seats        Seat[]
+
+  @@map("coaches")
+  @@unique([coach_number, train_id])
+}
+
+model Seat {
+  id           String         @id @default(uuid())
+  coach_id     String
+  seat_number  String
+  is_locked    Boolean        @default(false)
+  coach        Coach          @relation(fields: [coach_id], references: [id])
+  BookingSeat  BookingSeat[]
+
+  @@map("seats")
+}
+
+model Booking {
+  id             String        @id @default(uuid())
+  user_id        String
+  train_id       String
+  booking_status String
+  total_amount   Decimal       @db.Decimal(10, 2)
+  created_at     DateTime      @default(now())
+  user           User          @relation(fields: [user_id], references: [id])
+  train          Train         @relation(fields: [train_id], references: [id])
+  BookingSeat    BookingSeat[]
+
+  @@map("bookings")
+}
+
+model BookingSeat {
+  id          String  @id @default(uuid())
+  booking_id  String
+  seat_id     String
+  booking     Booking @relation(fields: [booking_id], references: [id])
+  seat        Seat    @relation(fields: [seat_id], references: [id])
+
+  @@map("booking_seats")
+} 
